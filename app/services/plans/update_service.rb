@@ -43,7 +43,10 @@ module Plans
         end
 
         process_charges(plan, params[:charges]) if params[:charges]
-        process_charge_groups(plan, params[:charge_groups]) if params[:charge_groups]
+
+        if params[:charge_groups] && params[:charges]
+          process_charge_groups(plan, params[:charge_groups], params[:charges])
+        end
       end
 
       result.plan = plan
@@ -74,6 +77,7 @@ module Plans
         prorated: params[:prorated] || false,
         properties: params[:properties].presence || Charges::BuildDefaultPropertiesService.call(charge_model(params)),
         group_properties: (params[:group_properties] || []).map { |gp| GroupProperty.new(gp) },
+        charge_group_id: params[:charge_group_id] || nil,
       )
 
       if License.premium?
@@ -98,11 +102,14 @@ module Plans
       model
     end
 
-    def process_charges(plan, params_charges)
+    def process_charges(plan, params_charges, should_process_child_charge_group: false)
       created_charges_ids = []
 
       hash_charges = params_charges.map { |c| c.to_h.deep_symbolize_keys }
       hash_charges.each do |payload_charge|
+        # NOTE: Skip charges that are part of a charge group
+        next if payload_charge[:charge_group_id].present? && !should_process_child_charge_group
+
         charge = plan.charges.find_by(id: payload_charge[:id])
 
         if charge
@@ -155,7 +162,7 @@ module Plans
     def sanitize_charges(plan, args_charges, created_charges_ids)
       args_charges_ids = args_charges.map { |c| c[:id] }.compact
       charges_ids = plan.charges.pluck(:id) - args_charges_ids - created_charges_ids
-      plan.charges.where(id: charges_ids).each { |charge| discard_charge!(charge) }
+      plan.charges.where(id: charges_ids).find_each { |charge| discard_charge!(charge) }
     end
 
     def discard_charge!(charge)
@@ -168,12 +175,15 @@ module Plans
       Invoice.where(id: draft_invoice_ids).update_all(ready_to_be_refreshed: true) # rubocop:disable Rails/SkipsModelValidations
     end
 
-    def process_charge_groups(plan, params_charge_groups)
+    def process_charge_groups(plan, params_charge_groups, params_charges)
       created_charge_groups_ids = []
 
       hash_charge_groups = params_charge_groups.map { |c| c.to_h.deep_symbolize_keys }
+      hash_charges = params_charges.map { |c| c.to_h.deep_symbolize_keys }
+
       hash_charge_groups.each do |payload_charge_group|
         charge_group = plan.charge_groups.find_by(id: payload_charge_group[:id])
+        child_charges = hash_charges.select { |c| c[:charge_group_id] == payload_charge_group[:id] }
 
         if charge_group
           properties = payload_charge_group.delete(:properties)
@@ -194,11 +204,18 @@ module Plans
             charge_group
           end
 
+          process_charges(plan, child_charges, should_process_child_charge_group: true) if child_charges.present?
+
           next
         end
 
         created_charge_group = create_charge_group(plan, payload_charge_group)
         created_charge_groups_ids.push(created_charge_group.id)
+
+        child_charges.each do |charge|
+          charge[:charge_group_id] = created_charge_group.id
+          create_charge(plan, charge)
+        end
       end
 
       # NOTE: Delete charge groups that are no more linked to the plan
@@ -217,6 +234,7 @@ module Plans
         charge_group.invoiceable = params[:invoiceable] unless params[:invoiceable].nil?
         charge_group.min_amount_cents = params[:min_amount_cents] || 0
       end
+
       charge_group.save!
       charge_group
     end
@@ -228,6 +246,7 @@ module Plans
     end
 
     def discard_charge_group!(charge_group)
+      charge_group.charges.each { |charge| discard_charge!(charge) }
       charge_group.discard!
     end
   end
