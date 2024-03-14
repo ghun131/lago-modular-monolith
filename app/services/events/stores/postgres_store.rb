@@ -166,7 +166,7 @@ module Events
         billable_metric = event.organization.billable_metrics.find_by(code: event.code)
         charge = Charge.where(plan:, billable_metric:).first
 
-        UsageChargeGroup.find_by(subscription_id: subscription.id, charge_group_id: charge.charge_group_id)
+        UsageChargeGroup.find_by(subscription_id: subscription.id, charge_group_id: charge&.charge_group_id)
       end
     end
   end
