@@ -70,8 +70,9 @@ module Charges
       end
 
       def reset_available_group_usage(init_pacakge_size = nil)
-        available_group_usage = {}
+        return unless usage_charge_group
 
+        available_group_usage = {}
         usage_charge_group.charge_group.charges.package_group.each do |child_charge|
           available_group_usage[child_charge.billable_metric_id] = child_charge.properties['package_size']
         end
