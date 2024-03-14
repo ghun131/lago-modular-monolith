@@ -24,7 +24,7 @@ module Charges
       end
 
       def per_package_unit_amount
-        @per_package_unit_amount ||= if is_in_group_charge?
+        @per_package_unit_amount ||= if charge_belongs_to_group?
           per_group_package_unit_amount
         else
           BigDecimal(properties['amount'])
@@ -37,7 +37,7 @@ module Charges
 
       private
 
-      def is_in_group_charge?
+      def charge_belongs_to_group?
         charge.charge_group_id.present?
       end
 
