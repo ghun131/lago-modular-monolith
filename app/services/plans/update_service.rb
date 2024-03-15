@@ -42,7 +42,9 @@ module Plans
           return taxes_result unless taxes_result.success?
         end
 
-        process_charges(plan, params[:charges]) if params[:charges]
+        if params[:charge_groups] && params[:charges]
+          process_charge_groups(plan, params[:charge_groups], params[:charges])
+        end
       end
 
       result.plan = plan
@@ -73,6 +75,7 @@ module Plans
         prorated: params[:prorated] || false,
         properties: params[:properties].presence || Charges::BuildDefaultPropertiesService.call(charge_model(params)),
         group_properties: (params[:group_properties] || []).map { |gp| GroupProperty.new(gp) },
+        charge_group_id: params[:charge_group_id] || nil,
       )
 
       if License.premium?
@@ -154,7 +157,7 @@ module Plans
     def sanitize_charges(plan, args_charges, created_charges_ids)
       args_charges_ids = args_charges.map { |c| c[:id] }.compact
       charges_ids = plan.charges.pluck(:id) - args_charges_ids - created_charges_ids
-      plan.charges.where(id: charges_ids).each { |charge| discard_charge!(charge) }
+      plan.charges.where(id: charges_ids).find_each { |charge| discard_charge!(charge) }
     end
 
     def discard_charge!(charge)
@@ -165,6 +168,79 @@ module Plans
       charge.group_properties.discard_all
 
       Invoice.where(id: draft_invoice_ids).update_all(ready_to_be_refreshed: true) # rubocop:disable Rails/SkipsModelValidations
+    end
+
+    def process_charge_groups(plan, params_charge_groups, params_charges)
+      created_charge_groups_ids = []
+
+      hash_charge_groups = params_charge_groups.map { |c| c.to_h.deep_symbolize_keys }
+      hash_charge_groups.each do |payload_charge_group|
+        update_individual_charge_group(plan, payload_charge_group, params_charges, created_charge_groups_ids)
+      end
+
+      process_charges(plan, params_charges)
+
+      # NOTE: Delete charge groups that are no more linked to the plan
+      sanitize_charge_groups(plan, hash_charge_groups, created_charge_groups_ids)
+    end
+
+    def update_individual_charge_group(plan, payload_charge_group, params_charges, created_charge_groups_ids)
+      charge_group = plan.charge_groups.find_by(id: payload_charge_group[:id])
+
+      if charge_group
+        properties = payload_charge_group.delete(:properties)
+        charge_group.update!(
+          invoice_display_name: payload_charge_group[:invoice_display_name],
+          properties: properties.presence || ChargeGroups::BuildDefaultPropertiesService.call,
+        )
+
+        # NOTE: charge groups cannot be edited if plan is attached to a subscription
+        unless plan.attached_to_subscriptions?
+          invoiceable = payload_charge_group.delete(:invoiceable)
+          min_amount_cents = payload_charge_group.delete(:min_amount_cents)
+
+          charge_group.invoiceable = invoiceable if License.premium? && !invoiceable.nil?
+          charge_group.min_amount_cents = min_amount_cents || 0 if License.premium?
+
+          charge_group.update!(payload_charge_group)
+          charge_group
+        end
+
+        return
+      end
+
+      created_charge_group = create_charge_group(plan, payload_charge_group)
+      created_charge_groups_ids.push(created_charge_group.id)
+
+      # NOTE: Update charge_group_id for child charges if their linked charge_group is created
+      params_charges.select { |c| c[:charge_group_id] == payload_charge_group[:id] }.each do |charge|
+        charge[:charge_group_id] = created_charge_group.id
+      end
+    end
+
+    def create_charge_group(plan, params)
+      charge_group = plan.charge_groups.new(
+        invoice_display_name: params[:invoice_display_name],
+        # NOTE: charge group is pay in advance by default since pay in arrears is not implemented yet
+        pay_in_advance: params[:pay_in_advance] || true,
+        properties: params[:properties].presence || ChargeGroups::BuildDefaultPropertiesService.call,
+        invoiceable: params[:invoiceable] || true,
+        min_amount_cents: params[:min_amount_cents] || 0,
+      )
+
+      charge_group.save!
+      charge_group
+    end
+
+    def sanitize_charge_groups(plan, args_charge_groups, created_charge_groups_ids)
+      args_charge_groups_ids = args_charge_groups.map { |c| c[:id] }.compact
+      charge_groups_ids = plan.charge_groups.pluck(:id) - args_charge_groups_ids - created_charge_groups_ids
+      plan.charge_groups.where(id: charge_groups_ids).find_each { |charge_group| discard_charge_group!(charge_group) }
+    end
+
+    def discard_charge_group!(charge_group)
+      charge_group.charges.each { |charge| discard_charge!(charge) }
+      charge_group.discard!
     end
   end
 end
