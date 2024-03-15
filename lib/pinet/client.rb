@@ -7,13 +7,13 @@ module Pinet
     TIMEOUT = 5 # seconds
 
     def initialize(is_sync: false)
-      @authorization_token = JwtService.create_jwt
+      @auth_token = JwtService.create_jwt
       @is_sync = is_sync
     end
 
     def conn
       @conn ||= Faraday.new(url: PINET_API_URL) do |faraday|
-        faraday.headers['Authorization'] = "Bearer #{@authorization_token}"
+        faraday.headers['Authorization'] = "Bearer #{auth_token}"
         faraday.request(:url_encoded)
         faraday.adapter(Faraday.default_adapter)
       end
@@ -42,7 +42,24 @@ module Pinet
       handle_transaction_result(transaction)
     end
 
+    def valid_auth_token?(token)
+      response = conn.post do |req|
+        req.url('/api')
+        req.headers['Content-Type'] = 'application/json'
+        req.headers['Authorization'] = "Bearer #{token}"
+      end
+      result = JSON.parse(response.body)
+
+      return true if response.status == 200 && result['current_project'].present?
+
+      false
+    rescue Faraday::ConnectionFailed, Faraday::TimeoutError, JSON::ParserError
+      false
+    end
+
     private
+
+    attr_reader :auth_token
 
     def retrieve_transaction(transaction_id)
       start_time = Time.now.utc.to_i
