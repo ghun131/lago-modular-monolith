@@ -175,43 +175,47 @@ module Plans
 
       hash_charge_groups = params_charge_groups.map { |c| c.to_h.deep_symbolize_keys }
       hash_charge_groups.each do |payload_charge_group|
-        charge_group = plan.charge_groups.find_by(id: payload_charge_group[:id])
-
-        if charge_group
-          properties = payload_charge_group.delete(:properties)
-          charge_group.update!(
-            invoice_display_name: payload_charge_group[:invoice_display_name],
-            properties: properties.presence || ChargeGroups::BuildDefaultPropertiesService.call,
-          )
-
-          # NOTE: charge groups cannot be edited if plan is attached to a subscription
-          unless plan.attached_to_subscriptions?
-            invoiceable = payload_charge_group.delete(:invoiceable)
-            min_amount_cents = payload_charge_group.delete(:min_amount_cents)
-
-            charge_group.invoiceable = invoiceable if License.premium? && !invoiceable.nil?
-            charge_group.min_amount_cents = min_amount_cents || 0 if License.premium?
-
-            charge_group.update!(payload_charge_group)
-            charge_group
-          end
-
-          next
-        end
-
-        created_charge_group = create_charge_group(plan, payload_charge_group)
-        created_charge_groups_ids.push(created_charge_group.id)
-
-        # NOTE: Update charge_group_id for child charges if their linked charge_group is created
-        params_charges.select { |c| c[:charge_group_id] == payload_charge_group[:id] }.each do |charge|
-          charge[:charge_group_id] = created_charge_group.id
-        end
+        update_individual_charge_group(plan, payload_charge_group, params_charges, created_charge_groups_ids)
       end
 
       process_charges(plan, params_charges)
 
       # NOTE: Delete charge groups that are no more linked to the plan
       sanitize_charge_groups(plan, hash_charge_groups, created_charge_groups_ids)
+    end
+
+    def update_individual_charge_group(plan, payload_charge_group, params_charges, created_charge_groups_ids)
+      charge_group = plan.charge_groups.find_by(id: payload_charge_group[:id])
+
+      if charge_group
+        properties = payload_charge_group.delete(:properties)
+        charge_group.update!(
+          invoice_display_name: payload_charge_group[:invoice_display_name],
+          properties: properties.presence || ChargeGroups::BuildDefaultPropertiesService.call,
+        )
+
+        # NOTE: charge groups cannot be edited if plan is attached to a subscription
+        unless plan.attached_to_subscriptions?
+          invoiceable = payload_charge_group.delete(:invoiceable)
+          min_amount_cents = payload_charge_group.delete(:min_amount_cents)
+
+          charge_group.invoiceable = invoiceable if License.premium? && !invoiceable.nil?
+          charge_group.min_amount_cents = min_amount_cents || 0 if License.premium?
+
+          charge_group.update!(payload_charge_group)
+          charge_group
+        end
+
+        return
+      end
+
+      created_charge_group = create_charge_group(plan, payload_charge_group)
+      created_charge_groups_ids.push(created_charge_group.id)
+
+      # NOTE: Update charge_group_id for child charges if their linked charge_group is created
+      params_charges.select { |c| c[:charge_group_id] == payload_charge_group[:id] }.each do |charge|
+        charge[:charge_group_id] = created_charge_group.id
+      end
     end
 
     def create_charge_group(plan, params)
