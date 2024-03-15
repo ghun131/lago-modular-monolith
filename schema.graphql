@@ -79,6 +79,8 @@ input AddPinetPaymentProviderInput {
   """
   clientMutationId: String
   createCustomers: Boolean
+  keyId: String!
+  privateKey: String!
   secretKey: String
   successRedirectUrl: String
 }
@@ -192,6 +194,7 @@ enum BillingTimeEnum {
 
 type Charge {
   billableMetric: BillableMetric!
+  chargeGroup: ChargeGroup
   chargeModel: ChargeModelEnum!
   createdAt: ISO8601DateTime!
   deletedAt: ISO8601DateTime
@@ -207,8 +210,42 @@ type Charge {
   updatedAt: ISO8601DateTime!
 }
 
+type ChargeGroup {
+  charges: [Charge!]
+  createdAt: ISO8601DateTime!
+  deletedAt: ISO8601DateTime
+  id: ID!
+  invoiceDisplayName: String
+  invoiceable: Boolean!
+  minAmountCents: BigInt!
+  payInAdvance: Boolean!
+  properties: ChargeGroupProperties!
+  updatedAt: ISO8601DateTime!
+  usageChargeGroups: [UsageChargeGroup!]
+}
+
+input ChargeGroupInput {
+  id: ID
+  invoiceDisplayName: String
+  invoiceable: Boolean
+  minAmountCents: BigInt
+  payInAdvance: Boolean
+  properties: ChargeGroupPropertiesInput
+}
+
+type ChargeGroupProperties {
+  amount: String
+  freeUnits: BigInt
+}
+
+input ChargeGroupPropertiesInput {
+  amount: String
+  freeUnits: BigInt
+}
+
 input ChargeInput {
   billableMetricId: ID!
+  chargeGroupId: ID
   chargeModel: ChargeModelEnum!
   groupProperties: [GroupPropertiesInput!]
   id: ID
@@ -225,6 +262,7 @@ enum ChargeModelEnum {
   graduated
   graduated_percentage
   package
+  package_group
   percentage
   standard
   timebased
@@ -1790,6 +1828,7 @@ input CreatePlanInput {
   amountCents: BigInt!
   amountCurrency: CurrencyEnum!
   billChargesMonthly: Boolean
+  chargeGroups: [ChargeGroupInput!]
   charges: [ChargeInput!]!
 
   """
@@ -4188,7 +4227,9 @@ input OrganizationBillingConfigurationInput {
 type PinetProvider {
   createCustomers: Boolean!
   id: ID!
-  secretKey: String!
+  keyId: String!
+  privateKey: String!
+  secretKey: String
   successRedirectUrl: String
 }
 
@@ -4197,6 +4238,12 @@ type Plan {
   amountCents: BigInt!
   amountCurrency: CurrencyEnum!
   billChargesMonthly: Boolean
+  chargeGroups: [ChargeGroup!]
+
+  """
+  Number of charge groups attached to a plan
+  """
+  chargeGroupsCount: Int!
   charges: [Charge!]
 
   """
@@ -5943,6 +5990,17 @@ input UpdateSubscriptionInput {
   name: String
   planOverrides: PlanOverridesInput
   subscriptionAt: ISO8601DateTime
+}
+
+type UsageChargeGroup {
+  availableGroupUsage: JSON
+  chargeGroup: ChargeGroup!
+  createdAt: ISO8601DateTime!
+  currentPackageCount: BigInt!
+  deletedAt: ISO8601DateTime
+  id: ID!
+  subscription: Subscription!
+  updatedAt: ISO8601DateTime!
 }
 
 type User {
