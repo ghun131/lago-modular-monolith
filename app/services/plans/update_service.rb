@@ -42,8 +42,6 @@ module Plans
           return taxes_result unless taxes_result.success?
         end
 
-        process_charges(plan, params[:charges]) if params[:charges]
-
         if params[:charge_groups] && params[:charges]
           process_charge_groups(plan, params[:charge_groups], params[:charges])
         end
@@ -102,14 +100,11 @@ module Plans
       model
     end
 
-    def process_charges(plan, params_charges, should_process_child_charge_group: false)
+    def process_charges(plan, params_charges)
       created_charges_ids = []
 
       hash_charges = params_charges.map { |c| c.to_h.deep_symbolize_keys }
       hash_charges.each do |payload_charge|
-        # NOTE: Skip charges that are part of a charge group
-        next if payload_charge[:charge_group_id].present? && !should_process_child_charge_group
-
         charge = plan.charges.find_by(id: payload_charge[:id])
 
         if charge
@@ -179,11 +174,8 @@ module Plans
       created_charge_groups_ids = []
 
       hash_charge_groups = params_charge_groups.map { |c| c.to_h.deep_symbolize_keys }
-      hash_charges = params_charges.map { |c| c.to_h.deep_symbolize_keys }
-
       hash_charge_groups.each do |payload_charge_group|
         charge_group = plan.charge_groups.find_by(id: payload_charge_group[:id])
-        child_charges = hash_charges.select { |c| c[:charge_group_id] == payload_charge_group[:id] }
 
         if charge_group
           properties = payload_charge_group.delete(:properties)
@@ -204,19 +196,19 @@ module Plans
             charge_group
           end
 
-          process_charges(plan, child_charges, should_process_child_charge_group: true) if child_charges.present?
-
           next
         end
 
         created_charge_group = create_charge_group(plan, payload_charge_group)
         created_charge_groups_ids.push(created_charge_group.id)
 
-        child_charges.each do |charge|
+        # NOTE: Update charge_group_id for child charges if their linked charge_group is created
+        params_charges.select { |c| c[:charge_group_id] == payload_charge_group[:id] }.each do |charge|
           charge[:charge_group_id] = created_charge_group.id
-          create_charge(plan, charge)
         end
       end
+
+      process_charges(plan, params_charges)
 
       # NOTE: Delete charge groups that are no more linked to the plan
       sanitize_charge_groups(plan, hash_charge_groups, created_charge_groups_ids)

@@ -9,4 +9,6 @@ class ChargeGroup < ApplicationRecord
 
   has_many :charges, dependent: :destroy
   has_many :usage_charge_groups, dependent: :destroy
+
+  default_scope -> { kept }
 end

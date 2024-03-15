@@ -28,26 +28,25 @@ module Types
       field :updated_at, GraphQL::Types::ISO8601DateTime, null: false
 
       field :active_subscriptions_count, Integer, null: false
-      field :charge_groups_count, Integer, null: false, description: 'Number of charge groups attached to a plan'
       field :charges_count, Integer, null: false, description: 'Number of charges attached to a plan'
       field :customers_count, Integer, null: false, description: 'Number of customers attached to a plan'
       field :draft_invoices_count, Integer, null: false
       field :subscriptions_count, Integer, null: false
 
       def charges
-        object.charges.order(created_at: :asc)
+        return object.charges.order(created_at: :asc) unless object.discarded?
+
+        Charge.with_discarded.find_by(id: object.charge_id)
       end
 
       def charge_groups
-        object.charge_groups.order(created_at: :asc)
+        return object.charge_groups.order(created_at: :asc) unless object.discarded?
+
+        ChargeGroup.with_discarded.find_by(id: object.charge_group_id)
       end
 
       def charges_count
-        object.charges.count
-      end
-
-      def charge_groups_count
-        object.charge_groups.count
+        object.charge_groups.count + object.charges.where(charge_group_id: nil).count
       end
 
       def subscriptions_count
