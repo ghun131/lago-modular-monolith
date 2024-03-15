@@ -223,13 +223,10 @@ module Plans
         invoice_display_name: params[:invoice_display_name],
         # NOTE: charge group is pay in advance by default since pay in arrears is not implemented yet
         pay_in_advance: params[:pay_in_advance] || true,
-        properties: params[:properties].presence || Charges::BuildDefaultPropertiesService.call(charge_model(params)),
+        properties: params[:properties].presence || ChargeGroups::BuildDefaultPropertiesService.call,
+        invoiceable: params[:invoiceable] || true,
+        min_amount_cents: params[:min_amount_cents] || 0,
       )
-
-      if License.premium?
-        charge_group.invoiceable = params[:invoiceable] unless params[:invoiceable].nil?
-        charge_group.min_amount_cents = params[:min_amount_cents] || 0
-      end
 
       charge_group.save!
       charge_group

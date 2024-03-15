@@ -28,6 +28,7 @@ module Types
       field :updated_at, GraphQL::Types::ISO8601DateTime, null: false
 
       field :active_subscriptions_count, Integer, null: false
+      field :charge_groups_count, Integer, null: false, description: 'Number of charge groups attached to a plan'
       field :charges_count, Integer, null: false, description: 'Number of charges attached to a plan'
       field :customers_count, Integer, null: false, description: 'Number of customers attached to a plan'
       field :draft_invoices_count, Integer, null: false
@@ -46,7 +47,11 @@ module Types
       end
 
       def charges_count
-        object.charge_groups.count + object.charges.where(charge_group_id: nil).count
+        object.charges.count
+      end
+
+      def charge_groups_count
+        object.charge_groups.count
       end
 
       def subscriptions_count
