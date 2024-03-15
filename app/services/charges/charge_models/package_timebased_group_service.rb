@@ -43,7 +43,9 @@ module Charges
       end
 
       def initial_group_units
-        paid_units.fdiv(per_package_size).to_i
+        return 0 if paid_units <= per_package_size
+
+        paid_units.fdiv(per_package_size).ceil
       end
 
       def group_usage
