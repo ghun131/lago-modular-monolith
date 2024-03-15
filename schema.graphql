@@ -4225,11 +4225,9 @@ input OrganizationBillingConfigurationInput {
 }
 
 type PinetProvider {
-  createCustomers: Boolean!
   id: ID!
   keyId: String!
   privateKey: String!
-  secretKey: String
   successRedirectUrl: String
 }
 

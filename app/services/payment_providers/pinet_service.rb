@@ -4,7 +4,7 @@ module PaymentProviders
   class PinetService < BaseService
     def create_or_update(**args)
       unless auth_token_valid?(args)
-        # TODO define a code for this error
+        # TODO: define a code for this error
         return result.service_failure!(code: 'auth_token_error', message: 'Invalid token')
       end
 
