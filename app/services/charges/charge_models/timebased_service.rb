@@ -24,11 +24,25 @@ module Charges
       end
 
       def per_package_unit_amount
-        @per_package_unit_amount ||= BigDecimal(properties['amount'])
+        @per_package_unit_amount ||= if charge_belongs_to_group?
+          per_group_package_unit_amount
+        else
+          BigDecimal(properties['amount'])
+        end
       end
 
       def paid_units
         @paid_units ||= units
+      end
+
+      private
+
+      def charge_belongs_to_group?
+        charge.charge_group_id.present?
+      end
+
+      def per_group_package_unit_amount
+        @per_group_package_unit_amount ||= BigDecimal(charge.charge_group.properties['amount'])
       end
     end
   end

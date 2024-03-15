@@ -43,8 +43,8 @@ module Charges
       end
 
       def initial_group_units
-        # Check how many packages (groups of units) are consumed
-        # For the first time, it's rounded up, because a group counts from its first unit
+        return 0 if paid_units <= per_package_size
+
         paid_units.fdiv(per_package_size).ceil
       end
 
@@ -70,8 +70,9 @@ module Charges
       end
 
       def reset_available_group_usage(init_pacakge_size = nil)
-        available_group_usage = {}
+        return unless usage_charge_group
 
+        available_group_usage = {}
         usage_charge_group.charge_group.charges.package_group.each do |child_charge|
           available_group_usage[child_charge.billable_metric_id] = child_charge.properties['package_size']
         end
