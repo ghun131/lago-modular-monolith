@@ -43,8 +43,6 @@ module Charges
       end
 
       def initial_group_units
-        # Check how many packages (groups of units) are consumed
-        # For the first time, it's rounded up, because a group counts from its first unit
         paid_units.fdiv(per_package_size).to_i
       end
 
