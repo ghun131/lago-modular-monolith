@@ -17,14 +17,12 @@ module Types
       field :deleted_at, GraphQL::Types::ISO8601DateTime, null: true
       field :updated_at, GraphQL::Types::ISO8601DateTime, null: false
 
-      # TODO: check if this is needed
       def charge_group
         return object.charge_group unless object.discarded?
 
         ChargeGroup.with_discarded.find_by(id: object.charge_group_id)
       end
 
-      # TODO: check if this is needed
       delegate :subscription, to: :object
     end
   end

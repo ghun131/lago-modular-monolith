@@ -7,6 +7,8 @@ class ChargeGroup < ApplicationRecord
 
   belongs_to :plan, -> { with_discarded }, touch: true
 
-  has_many :charges
-  has_many :usage_charge_groups
+  has_many :charges, dependent: :destroy
+  has_many :usage_charge_groups, dependent: :destroy
+
+  default_scope -> { kept }
 end

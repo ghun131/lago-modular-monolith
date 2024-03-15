@@ -5,7 +5,7 @@ class UsageChargeGroup < ApplicationRecord
   include Discard::Model
   self.discard_column = :deleted_at
 
-  belongs_to :charge_group
+  belongs_to :charge_group, -> { with_discarded }
   belongs_to :subscription
 
   # TODO: add details validations
