@@ -57,7 +57,7 @@ module Pinet
       false
     end
 
-    # private
+    private
 
     attr_reader :pinet_payment_provider, :is_sync
 
