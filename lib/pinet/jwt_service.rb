@@ -17,8 +17,8 @@ module Pinet
         'exp' => exp,
       }
 
-      private_key = OpenSSL::PKey::RSA.new(private_key || ENV['PUBLISHER_PRIVATE_KEY_FROM_JSON'])
-      kid = key_id || ENV['PUBLISHER_PRIVATE_KEY_ID_FROM_JSON']
+      private_key = OpenSSL::PKey::RSA.new(private_key)
+      kid = key_id
 
       additional_headers = { 'kid' => kid }
       JWT.encode(payload, private_key, 'RS256', additional_headers)
