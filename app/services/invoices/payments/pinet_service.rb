@@ -75,7 +75,10 @@ module Invoices
       delegate :organization, :customer, to: :invoice
 
       def client
-        @client ||= Pinet::Client.new(is_sync: @is_sync)
+        @client ||= Pinet::Client.new(
+          pinet_payment_provider: organization.pinet_payment_provider,
+          is_sync: @is_sync,
+        )
       end
 
       def should_process_payment?
