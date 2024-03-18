@@ -35,11 +35,15 @@ module Types
       field :subscriptions_count, Integer, null: false
 
       def charges
-        object.charges.order(created_at: :asc)
+        return object.charges.order(created_at: :asc) unless object.discarded?
+
+        Charge.with_discarded.find_by(id: object.charge_id)
       end
 
       def charge_groups
-        object.charge_groups.order(created_at: :asc)
+        return object.charge_groups.order(created_at: :asc) unless object.discarded?
+
+        ChargeGroup.with_discarded.find_by(id: object.charge_group_id)
       end
 
       def charges_count
