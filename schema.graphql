@@ -5938,6 +5938,7 @@ input UpdatePlanInput {
   amountCents: BigInt!
   amountCurrency: CurrencyEnum!
   billChargesMonthly: Boolean
+  chargeGroups: [ChargeGroupInput!]
   charges: [ChargeInput!]!
 
   """
