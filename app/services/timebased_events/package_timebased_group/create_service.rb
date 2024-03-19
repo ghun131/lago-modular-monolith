@@ -55,7 +55,7 @@ module TimebasedEvents
       def matching_grouped_charge_model?
         return false if matching_charge.blank?
 
-        matching_charge.charge_model == 'package_group' && charge_has_eligible_grouped_charge_model?
+        matching_charge.charge_model == 'package_group' && is_grouped_with_timebased_charge?
       end
 
       def subscription
@@ -81,10 +81,8 @@ module TimebasedEvents
         ).first
       end
 
-      def charge_has_eligible_grouped_charge_model?
-        return false if matching_charge.blank?
-
-        matching_charge.charge_group.charges.count == 2 && timebased_charge.present? && package_charge.present?
+      def is_grouped_with_timebased_charge?
+        timebased_charge.present?
       end
 
       def timebased_charge
