@@ -35,9 +35,9 @@ module Charges
     def charge_model
       charge_group_type = Utils::ChargeGroupTypeDeterminerService.call(charge.charge_group)
       @charge_model ||= case charge_group_type
-                        when :package_group
+                        when Utils::Constants::CHARGE_GROUP_TYPES[:PACKAGE_GROUP]
                           Charges::ChargeModels::PackageGroupService
-                        when :package_timebased_group
+                        when Utils::Constants::CHARGE_GROUP_TYPES[:PACKAGE_TIMEBASED_GROUP]
                           Charges::ChargeModels::PackageTimebasedGroupService
                         else
                           raise(NotImplementedError)
