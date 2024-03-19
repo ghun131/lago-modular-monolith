@@ -17,7 +17,9 @@ module Utils
 
     def charge_group_type
       return Constants::CHARGE_GROUP_TYPES[:PACKAGES_GROUP] if all_charges_are_package_group?
-      return Constants::CHARGE_GROUP_TYPES[:PACKAGE_TIMEBASED_GROUP] if has_one_timebased_charge?
+      if has_one_timebased_charge? && has_at_least_one_package_group?
+        return Constants::CHARGE_GROUP_TYPES[:PACKAGE_TIMEBASED_GROUP]
+      end
 
       Constants::CHARGE_GROUP_TYPES[:UNKNOWN]
     end
@@ -28,6 +30,10 @@ module Utils
 
     def all_charges_are_package_group?
       charge_group.charges.count == charge_group.charges.package_group.count
+    end
+
+    def has_at_least_one_package_group?
+      charge_group.charges.package_group.any?
     end
   end
 end
