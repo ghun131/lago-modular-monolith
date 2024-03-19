@@ -16,7 +16,7 @@ module Utils
     attr_reader :charge_group
 
     def charge_group_type
-      return Constants::CHARGE_GROUP_TYPES[:PACKAGES_GROUP] if all_charges_are_package_group?
+      return Constants::CHARGE_GROUP_TYPES[:PACKAGE_GROUP] if all_charges_are_package_group?
       if has_one_timebased_charge? && has_at_least_one_package_group?
         return Constants::CHARGE_GROUP_TYPES[:PACKAGE_TIMEBASED_GROUP]
       end
