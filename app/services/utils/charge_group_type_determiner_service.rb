@@ -16,37 +16,24 @@ module Utils
     attr_reader :charge_group
 
     def charge_group_type
-      return Constants::CHARGE_GROUP_TYPES[:PACKAGE_GROUP] if is_packages_group?
-      return Constants::CHARGE_GROUP_TYPES[:PACKAGE_TIMEBASED_GROUP] if is_package_timebased_group?
+      return Constants::CHARGE_GROUP_TYPES[:PACKAGE_GROUP] if all_charges_are_package_group?
+      if has_one_timebased_charge? && has_at_least_one_package_group?
+        return Constants::CHARGE_GROUP_TYPES[:PACKAGE_TIMEBASED_GROUP]
+      end
 
       Constants::CHARGE_GROUP_TYPES[:UNKNOWN]
     end
 
-    def is_package_timebased_group?
-      has_exactly_two_charges? &&
-        one_timebased_charge? &&
-        one_package_group_charge?
-    end
-
-    def is_packages_group?
-      has_exactly_two_charges? &&
-        all_charges_are_package_group?
-    end
-
-    def has_exactly_two_charges?
-      charge_group.charges.count == 2
-    end
-
-    def one_timebased_charge?
+    def has_one_timebased_charge?
       charge_group.charges.timebased.count == 1
     end
 
-    def one_package_group_charge?
-      charge_group.charges.package_group.count == 1
+    def all_charges_are_package_group?
+      charge_group.charges.count == charge_group.charges.package_group.count
     end
 
-    def all_charges_are_package_group?
-      charge_group.charges.package_group.count == 2
+    def has_at_least_one_package_group?
+      charge_group.charges.package_group.any?
     end
   end
 end
