@@ -77,6 +77,7 @@ module TimebasedEvents
 
         @matching_charge ||= Charge.where(
           charge_model: :package_group,
+          billable_metric_id: matching_billable_metric.id,
           plan_id: plan.id,
         ).first
       end
@@ -126,6 +127,9 @@ module TimebasedEvents
           available_group_usage:,
           current_package_count: current_package_count + 1,
         )
+      end
+      def matching_billable_metric
+        @matching_billable_metric ||= organization.billable_metrics.find_by(code: event.code)
       end
     end
   end
