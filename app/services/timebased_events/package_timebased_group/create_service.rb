@@ -17,7 +17,7 @@ module TimebasedEvents
 
         if (current_package_count = event.current_package_count) > 1
           increase_current_package_count(current_package_count)
-          reset_usage_charge_group(current_package_count)
+          update_usage_charge_group(current_package_count)
         end
 
         result.timebased_event = timebased_event
@@ -77,6 +77,7 @@ module TimebasedEvents
 
         @matching_charge ||= Charge.where(
           charge_model: :package_group,
+          billable_metric_id: matching_billable_metric.id,
           plan_id: plan.id,
         ).first
       end
@@ -87,10 +88,6 @@ module TimebasedEvents
 
       def timebased_charge
         @timebased_charge ||= matching_charge.charge_group.charges.find_by(charge_model: 'timebased')
-      end
-
-      def package_charge
-        @package_charge ||= matching_charge.charge_group.charges.find_by(charge_model: 'package_group')
       end
 
       def process_renewal
@@ -111,7 +108,7 @@ module TimebasedEvents
         event.update!(current_package_count: new_package_count)
       end
 
-      def reset_usage_charge_group(current_package_count)
+      def update_usage_charge_group(current_package_count)
         usage_charge_group = UsageChargeGroup.find_by(
           charge_group_id: matching_charge.charge_group.id,
           subscription_id: subscription.id,
@@ -119,13 +116,25 @@ module TimebasedEvents
 
         return unless usage_charge_group
 
-        available_group_usage = {}
-        available_group_usage[package_charge.billable_metric_id] = package_charge.properties['package_size']
+        available_group_usage = initialize_available_group_usage
 
         usage_charge_group.update!(
           available_group_usage:,
           current_package_count: current_package_count + 1,
         )
+      end
+
+      def matching_billable_metric
+        @matching_billable_metric ||= organization.billable_metrics.find_by(code: event.code)
+      end
+
+      def initialize_available_group_usage
+        available_group_usage = {}
+        matching_charge.charge_group.charges.package_group.each do |child_charge|
+          available_group_usage[child_charge.billable_metric_id] = child_charge.properties['package_size']
+        end
+
+        available_group_usage
       end
     end
   end
