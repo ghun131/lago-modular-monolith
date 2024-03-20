@@ -116,7 +116,7 @@ module TimebasedEvents
 
         return unless usage_charge_group
 
-        available_group_usage = initialize_available_group_usage(usage_charge_group)
+        available_group_usage = initialize_available_group_usage
 
         usage_charge_group.update!(
           available_group_usage:,
