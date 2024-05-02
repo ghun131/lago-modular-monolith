@@ -1,6 +1,7 @@
+# Modular Monolith proposal
 This folder structure is inspired by [all_you_need_is_rails_engine](https://github.com/pinzonjulian/all_you_need_is_rails_engines), only 2 modules `entitlement` and `publisher_portal` are modularized at `subsystems` folder. In `app` folder, we still have `getLago` which is the same with original `getLago` repo.
 
-# GetLago+ DDD checklist
+## GetLago+ DDD checklist
 
 - [x] Multiple modules structure
 - [ ] Migration for each module
