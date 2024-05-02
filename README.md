@@ -1,21 +1,53 @@
-# Lago API
+# GetLago+ DDD checklist
 
-Lago is an open-source Stripe Billing alternative.
+- [x] Multiple modules structure
+- [ ] Migration for each module
+- [ ] Test and how to run tests
+- [ ] Module own routes.rb file (unable to mount separate engines and using subdomain)
+- [x] Set up `packwerk` for boundaries
+- [x] How to sync get_lago with original repo
+- [ ] Multiple databases
 
-This library will allow you to build an entire billing logic from scratch, even the most complex one. Lago is a real-time event-based library made for usage-based billing, subscription-based billing, and all the nuances of pricing in between.
+## Problems
+1. Can not separate `routes.rb` files for each modules (**entitlement** and **publisher_portal**). 
+```rb
+Rails.application.routes.draw do
+  mount Sidekiq::Web => '/sidekiq' if ENV['LAGO_SIDEKIQ_WEB'] == 'true'
 
-## Documentation
+  mount GraphiQL::Rails::Engine, at: '/graphiql', graphql_path: '/graphql' if Rails.env.development?
 
-The official Lago documentation is available here : https://doc.getlago.com
+  get 'entitlement', to: 'policy#index'
 
-## Contributing
+  # mount Entitlement::Engine, at: '/entitlement'
 
-The contribution documentation is available [here](https://github.com/getlago/lago-api/blob/main/CONTRIBUTING.md)
+  get 'publisher_portal', to: 'publisher#index'
 
-## Development Environment
+  post '/graphql', to: 'graphql#execute'
+  ...
+```
+The above code is excerpt from (routes.rb)[config/routes.rb] file. I have yet been able to separate `routes.rb` file and mount individual engines like what they did in [this sample](https://github.com/pinzonjulian/all_you_need_is_rails_engines)
 
-Check the wiki [guide](https://github.com/getlago/lago-api/wiki)
+2. Most modular monolith is only isolate module at the server level but not database. I am not sure that multiple databases can work well with this code structure and how would we do migration with different databases
 
-## License
+## Boundaries by packwerk
 
-Lago is distributed under [AGPL-3.0](LICENSE).
+- In your terminal run this command
+
+```sh
+packwerk check
+```
+
+This error message would appear
+![packwerk violation message](local_images/packwerk_violation.png)
+It can be fixed by update file `components/entitlement/package.yml` with this code
+
+```yml
+enforce_privacy: true
+enforce_dependencies: true
+
+dependencies:
+  - components/base
+  - components/get_lago
+```
+
+More details about how to use `packwerk` [can be found here](https://github.com/Shopify/packwerk/blob/main/USAGE.md#Enforcing-dependency-boundary)

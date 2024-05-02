@@ -16,6 +16,12 @@ Rails.application.routes.draw do
   # Health Check status
   get '/health', to: 'application#health'
 
+  get 'entitlement', to: 'policy#index'
+
+  # mount Entitlement::Engine, at: '/entitlement'
+
+  get 'publisher_portal', to: 'publisher#index'
+
   namespace :api do
     namespace :v1 do
       namespace :analytics do

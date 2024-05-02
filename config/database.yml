@@ -4,17 +4,17 @@ default: &default
 development:
   primary:
     <<: *default
-    host: db
+    host: localhost
     username: lago
     password: changeme
-    database: lago
+    database: lagu
     port: 5432
   events:
     <<: *default
-    host: db
+    host: localhost
     username: lago
     password: changeme
-    database: lago
+    database: lagu
     port: 5432
   clickhouse:
     adapter: clickhouse

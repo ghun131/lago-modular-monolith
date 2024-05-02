@@ -4,6 +4,9 @@ require_relative 'boot'
 
 require 'rails/all'
 
+require_relative '../subsystems/entitlement/lib/engine'
+require_relative '../subsystems/publisher_portal/lib/engine'
+
 Bundler.require(*Rails.groups)
 
 module LagoApi

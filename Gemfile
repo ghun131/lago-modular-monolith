@@ -107,3 +107,5 @@ group :development do
   gem 'sass-rails'
   gem 'uglifier'
 end
+
+gem "packwerk", "~> 3.2"
