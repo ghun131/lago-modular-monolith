@@ -1,3 +1,5 @@
+This folder structure is inspired by [all_you_need_is_rails_engine](https://github.com/pinzonjulian/all_you_need_is_rails_engines), only 2 modules `entitlement` and `publisher_portal` are modularized at `subsystems` folder. In `app` folder, we still have `getLago` which is the same with original `getLago` repo.
+
 # GetLago+ DDD checklist
 
 - [x] Multiple modules structure
@@ -9,7 +11,9 @@
 - [ ] Multiple databases
 
 ## Problems
-1. Can not separate `routes.rb` files for each modules (**entitlement** and **publisher_portal**). 
+
+1. Can not separate `routes.rb` files for each modules (**entitlement** and **publisher_portal**).
+
 ```rb
 Rails.application.routes.draw do
   mount Sidekiq::Web => '/sidekiq' if ENV['LAGO_SIDEKIQ_WEB'] == 'true'
@@ -25,6 +29,7 @@ Rails.application.routes.draw do
   post '/graphql', to: 'graphql#execute'
   ...
 ```
+
 The above code is excerpt from (routes.rb)[config/routes.rb] file. I have yet been able to separate `routes.rb` file and mount individual engines like what they did in [this sample](https://github.com/pinzonjulian/all_you_need_is_rails_engines)
 
 2. Most modular monolith is only isolate module at the server level but not database. I am not sure that multiple databases can work well with this code structure and how would we do migration with different databases
