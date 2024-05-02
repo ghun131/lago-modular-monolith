@@ -33,7 +33,7 @@ Rails.application.routes.draw do
 
 The above code is excerpt from (routes.rb)[config/routes.rb] file. I have yet been able to separate `routes.rb` file and mount individual engines like what they did in [this sample](https://github.com/pinzonjulian/all_you_need_is_rails_engines)
 
-2. Most modular monolith is only isolate module at the server level but not database. I am not sure that multiple databases can work well with this code structure and how would we do migration with different databases
+2. Most modular monolith only isolate module at the code level but not database. There is a certain degree of anxiety for developers to move forward with modularity at database level by utilizing multiple database. What impact this structure would make for migration and deployment are still unknown?
 
 ## Boundaries by packwerk
 
