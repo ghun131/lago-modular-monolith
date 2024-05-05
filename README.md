@@ -3,7 +3,6 @@
 This folder structure is inspired by [all_you_need_is_rails_engine](https://github.com/pinzonjulian/all_you_need_is_rails_engines), only 2 modules `entitlement` and `publisher_portal` are modularized at `subsystems` folder. In `app` folder, we still have `getLago` which is the same with original `getLago` repo.
 
 ## GetLago+ DDD checklist
-
 - [x] Multiple modules structure
 - [x] Migration for each module
 - [x] Set up `packwerk` for boundaries
@@ -11,6 +10,7 @@ This folder structure is inspired by [all_you_need_is_rails_engine](https://gith
 - [x] Multiple databases
 - [ ] Test and how to run tests
 - [ ] Module has its own routes.rb file
+- [ ] Replace current GetLago with version 1.2.1
 
 ## Problems
 
