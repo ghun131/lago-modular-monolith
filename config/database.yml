@@ -9,6 +9,13 @@ development:
     password: changeme
     database: lagu
     port: 5432
+  publisher_portal:
+    <<: *default
+    host: localhost
+    username: lago
+    password: changeme
+    database: publisher_portal
+    port: 5432
   events:
     <<: *default
     host: localhost

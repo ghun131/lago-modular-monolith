@@ -20,7 +20,7 @@ Rails.application.routes.draw do
 
   # mount Entitlement::Engine, at: '/entitlement'
 
-  get 'publisher_portal', to: 'publisher#index'
+  get 'publisher_portal', to: 'subscription_charge#index'
 
   namespace :api do
     namespace :v1 do
