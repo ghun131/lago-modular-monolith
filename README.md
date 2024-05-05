@@ -6,11 +6,11 @@ This folder structure is inspired by [all_you_need_is_rails_engine](https://gith
 
 - [x] Multiple modules structure
 - [x] Migration for each module
-- [ ] Test and how to run tests
-- [ ] Module own routes.rb file (unable to mount separate engines and using subdomain)
 - [x] Set up `packwerk` for boundaries
 - [x] How to sync get_lago with original repo
 - [x] Multiple databases
+- [ ] Test and how to run tests
+- [ ] Module has its own routes.rb file
 
 ## Problems
 
@@ -24,7 +24,7 @@ Rails.application.routes.draw do
 
   get 'entitlement', to: 'policy#index'
 
-  # mount Entitlement::Engine, at: '/entitlement'
+  mount Entitlement::Engine, at: '/entitlement'
 
   get 'publisher_portal', to: 'publisher#index'
 
@@ -32,9 +32,10 @@ Rails.application.routes.draw do
   ...
 ```
 
-The above code is excerpt from (routes.rb)[config/routes.rb] file. I have yet been able to separate `routes.rb` file and mount individual engines like what they did in [this sample](https://github.com/pinzonjulian/all_you_need_is_rails_engines)
+The above code is excerpt from (routes.rb)[config/routes.rb] file. I have yet been able to separate `routes.rb` file and mount individual engines like what they did in [this sample](https://github.com/pinzonjulian/all_you_need_is_rails_engines). In order to achieve module ownership for routes, I need to be able to replace this code `get 'entitlement', to: 'policy#index'` with `mount Entitlement::Engine, at: '/entitlement'`
 
-2. Most modular monolith only isolate module at the code level but not database. There is a certain degree of anxiety for developers to move forward with modularity at database level by utilizing multiple database. What impact this structure would make for migration and deployment are still unknown?
+2. Tests are failling. Running tests by either `RAILS_ENV=test bundle exec rspec` or `dotenv bundle exec rspec` doesn't work
+![failed test run](local_images/failed_test_run.png)
 
 ## Boundaries by packwerk
 
@@ -61,7 +62,7 @@ More details about how to use `packwerk` [can be found here](https://github.com/
 
 ## Set up multiple database
 
-Setting up multiple database for modular monolith app is very similar to standard Ruby app. In this repo, there 2 databases `lagu` and `publisher_portal` already set up. `lagu` is consider the primary database so this is migration command for `lagu`
+Setting up multiple database for modular monolith app is very similar to standard Ruby app. In this repo, there are 2 databases `lagu` and `publisher_portal` already set up. `lagu` is consider the primary database so this is migration command for `lagu`
 
 ```sh
 bin/rails db:migrate:primary
@@ -75,7 +76,7 @@ bin/rails db:migrate:publisher_portal
 
 ## Migration for each module
 
-Generating migration for each module (E.g: entitlement, publisher_portal) is not really an issue whey they share the same database. In this app, we're using 2 database `lagu` and `publisher_portal` so to make any change to any database, we must target exactly what database we're trying to make the change.
+Generating migration for each module (E.g: entitlement, publisher_portal) is not really an issue whey they share the same database. In this app, we're using 2 separate database `lagu` and `publisher_portal` so to make any change to any database, we must target exactly what database we're trying to make the change.
 Let's say we want to create a new table called `subscription_charges` for `publisher_portal` database. The command should be
 
 ```sh
