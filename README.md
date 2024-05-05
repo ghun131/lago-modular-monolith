@@ -14,7 +14,10 @@ This folder structure is inspired by [all_you_need_is_rails_engine](https://gith
 
 ## Problems
 
-1. Can not separate `routes.rb` files for each modules (**entitlement** and **publisher_portal**).
+1. Tests are failling. Running tests by either `RAILS_ENV=test bundle exec rspec` or `dotenv bundle exec rspec` doesn't work
+![failed test run](local_images/failed_test_run.png)
+
+2. Can not separate `routes.rb` files for each modules (**entitlement** and **publisher_portal**).
 
 ```rb
 Rails.application.routes.draw do
@@ -34,8 +37,8 @@ Rails.application.routes.draw do
 
 The above code is excerpt from (routes.rb)[config/routes.rb] file. I have yet been able to separate `routes.rb` file and mount individual engines like what they did in [this sample](https://github.com/pinzonjulian/all_you_need_is_rails_engines). In order to achieve module ownership for routes, I need to be able to replace this code `get 'entitlement', to: 'policy#index'` with `mount Entitlement::Engine, at: '/entitlement'`
 
-2. Tests are failling. Running tests by either `RAILS_ENV=test bundle exec rspec` or `dotenv bundle exec rspec` doesn't work
-![failed test run](local_images/failed_test_run.png)
+
+3. I have yet been able to setup version 1.2.1 for GetLago api at my local. It seems the Wiki has changed and they suggest [an alternative local development flow](https://github.com/getlago/lago-api/issues/1894)
 
 ## Boundaries by packwerk
 
