@@ -55,8 +55,7 @@ enforce_privacy: true
 enforce_dependencies: true
 
 dependencies:
-  - components/base
-  - components/get_lago
+  - app/controllers
 ```
 
 More details about how to use `packwerk` [can be found here](https://github.com/Shopify/packwerk/blob/main/USAGE.md#Enforcing-dependency-boundary)
